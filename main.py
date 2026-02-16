@@ -4,6 +4,10 @@ import os
 import sys
 
 from influxdb_client_3 import InfluxDBClient3, Point
+from fastapi import FastAPI, Request
+
+
+app = FastAPI()
 
 
 def write_sample_points(client: InfluxDBClient3.InfluxDBClient3) -> None:
@@ -53,3 +57,13 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+
+@app.get("/")
+async def root() -> str:
+    return "Hello, World!"
+
+
+@app.get("/greet/{name}")
+async def greet(name: str) -> str:
+    return f"Hello, {name}!"
