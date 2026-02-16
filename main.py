@@ -78,7 +78,7 @@ async def add_sample(location: str, temperature: float) -> str:
         return str(write_sample(client, location, temperature))
 
 
-@app.post("/reset")
+@app.delete("/reset")
 async def reset_endpoint() -> dict:
     result = reset_database()
     return {"status": "ok", "result": result}
