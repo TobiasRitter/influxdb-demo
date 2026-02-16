@@ -1,3 +1,5 @@
 influxdb3-python
 pandas
 tabulate
+fastapi[standard]
+requests

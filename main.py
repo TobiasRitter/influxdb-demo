@@ -1,41 +1,90 @@
 from __future__ import annotations
 
 import os
-import sys
+import requests
 
 from influxdb_client_3 import InfluxDBClient3, Point
+from fastapi import FastAPI, HTTPException
+import pandas as pd
 
 
-def write_sample_points(client: InfluxDBClient3.InfluxDBClient3) -> None:
-    p1 = Point("demo_measurement").tag("location", "office").field("temperature", 22.5)
-    p2 = Point("demo_measurement").tag("location", "lab").field("temperature", 23.0)
-    p3 = (
+HOST = os.getenv("INFLUX_HOST", "http://localhost:8181")
+TOKEN = os.getenv("INFLUX_TOKEN")
+DATABASE = os.getenv("INFLUX_DATABASE", "demo")
+
+app = FastAPI()
+
+
+def write_sample(
+    client: InfluxDBClient3.InfluxDBClient3, location: str, temperature: float
+) -> Point:
+    point = (
         Point("demo_measurement")
-        .tag("location", "warehouse")
-        .field("temperature", 19.8)
+        .tag("location", location)
+        .field("temperature", temperature)
     )
-
-    client.write(p1)
-    client.write(p2)
-    client.write(p3)
+    client.write(point)
+    return point
 
 
-def query_and_print(client: InfluxDBClient3.InfluxDBClient3) -> None:
+def read_samples(client: InfluxDBClient3.InfluxDBClient3) -> pd.DataFrame | None:
     sql = "SELECT * FROM demo_measurement ORDER BY time DESC"
     print(f"\nRunning SQL query: {sql}\n")
 
     try:
         df = client.query_dataframe(sql)
-        print(df.to_markdown())
+        return df
     except Exception as exc:
-        print("Query failed:", exc, file=sys.stderr)
+        return None
+
+
+def reset_database() -> str:
+    base = HOST.rstrip("/")
+    headers = {"Authorization": f"Bearer {TOKEN}"}
+
+    url = f"{base}/api/v3/configure/table"
+    params = {"db": DATABASE, "table": "demo_measurement"}
+    resp = requests.delete(url, headers=headers, params=params, timeout=10)
+
+    if resp.status_code in (200, 204):
+        return f"table demo_measurement deleted (status {resp.status_code})"
+
+    if resp.status_code == 404:
+        return f"table demo_measurement not found (status 404)"
+
+    raise RuntimeError(f"failed to delete table: {resp.status_code} {resp.text}")
+
+
+@app.get("/")
+async def root() -> str:
+    return "Hello, World!"
+
+
+@app.get("/samples")
+async def get_samples() -> str:
+    client = InfluxDBClient3(token=TOKEN, host=HOST, database=DATABASE)
+    with client:
+        df = read_samples(client)
+        if df is not None:
+            return df.to_json(orient="records")
+        else:
+            return "No samples available"
+
+
+@app.post("/sample")
+async def add_sample(location: str, temperature: float) -> str:
+    client = InfluxDBClient3(token=TOKEN, host=HOST, database=DATABASE)
+    with client:
+        return str(write_sample(client, location, temperature))
+
+
+@app.delete("/reset")
+async def reset_endpoint() -> dict:
+    result = reset_database()
+    return {"status": "ok", "result": result}
 
 
 def main() -> None:
-    HOST = os.getenv("INFLUX_HOST", "http://localhost:8181")
-    TOKEN = os.getenv("INFLUX_TOKEN")
-    DATABASE = os.getenv("INFLUX_DATABASE", "demo")
-
     if not TOKEN:
         raise ValueError(
             "INFLUX_TOKEN environment variable is required for authentication. Please set it and try again."
@@ -46,9 +95,14 @@ def main() -> None:
     client = InfluxDBClient3(token=TOKEN, host=HOST, database=DATABASE)
     with client:
         print("Writing 3 sample points...")
-        write_sample_points(client)
+        write_sample(client, "office", 22.5)
+        write_sample(client, "lab", 23.0)
+        write_sample(client, "warehouse", 19.8)
         print("Write complete.")
-        query_and_print(client)
+
+        df = read_samples(client)
+        if df is not None:
+            print(df.to_markdown())
 
 
 if __name__ == "__main__":
