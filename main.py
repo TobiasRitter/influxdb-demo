@@ -66,7 +66,7 @@ async def get_samples() -> str:
     with client:
         df = read_samples(client)
         if df is not None:
-            return df.to_markdown()
+            return df.to_json(orient="records")
         else:
             return "No samples available"
 
