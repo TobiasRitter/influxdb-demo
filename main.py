@@ -1,33 +1,9 @@
 from __future__ import annotations
+
 import os
 import sys
 
-# optional: load a local .env file if present (no hard dependency)
-try:
-    from dotenv import load_dotenv
-
-    load_dotenv()
-except Exception:
-    pass
-
-try:
-    from influxdb_client_3 import InfluxDBClient3, Point
-except Exception as e:
-    print(
-        "Missing dependency: install 'influxdb3-python' (pip install influxdb3-python)",
-        file=sys.stderr,
-    )
-    raise
-
-HOST = os.getenv("INFLUX_HOST", "http://localhost:8181")
-TOKEN = os.getenv("INFLUX_TOKEN", "")
-DATABASE = os.getenv("INFLUX_DATABASE", "demo")
-
-if not TOKEN:
-    print(
-        "Warning: INFLUX_TOKEN is empty — the demo may fail if the server requires auth.",
-        file=sys.stderr,
-    )
+from influxdb_client_3 import InfluxDBClient3, Point
 
 
 def write_sample_points(client: InfluxDBClient3.InfluxDBClient3) -> None:
@@ -66,6 +42,15 @@ def query_and_print(client: InfluxDBClient3.InfluxDBClient3) -> None:
 
 
 def main() -> None:
+    HOST = os.getenv("INFLUX_HOST", "http://localhost:8181")
+    TOKEN = os.getenv("INFLUX_TOKEN")
+    DATABASE = os.getenv("INFLUX_DATABASE", "demo")
+
+    if not TOKEN:
+        raise ValueError(
+            "INFLUX_TOKEN environment variable is required for authentication. Please set it and try again."
+        )
+
     print(f"Connecting to InfluxDB host={HOST!r} database={DATABASE!r}")
 
     client = InfluxDBClient3(token=TOKEN, host=HOST, database=DATABASE)
@@ -73,7 +58,6 @@ def main() -> None:
         print("Writing 3 sample points...")
         write_sample_points(client)
         print("Write complete.")
-
         query_and_print(client)
 
 
