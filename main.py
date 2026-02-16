@@ -55,12 +55,6 @@ def reset_database() -> str:
     raise RuntimeError(f"failed to delete table: {resp.status_code} {resp.text}")
 
 
-@app.post("/reset")
-async def reset_endpoint() -> dict:
-    result = reset_database()
-    return {"status": "ok", "result": result}
-
-
 @app.get("/")
 async def root() -> str:
     return "Hello, World!"
@@ -70,7 +64,11 @@ async def root() -> str:
 async def get_samples() -> str:
     client = InfluxDBClient3(token=TOKEN, host=HOST, database=DATABASE)
     with client:
-        return read_samples(client).to_markdown()
+        df = read_samples(client)
+        if df is not None:
+            return df.to_markdown()
+        else:
+            return "No samples available"
 
 
 @app.post("/sample")
@@ -78,6 +76,12 @@ async def add_sample(location: str, temperature: float) -> str:
     client = InfluxDBClient3(token=TOKEN, host=HOST, database=DATABASE)
     with client:
         return str(write_sample(client, location, temperature))
+
+
+@app.post("/reset")
+async def reset_endpoint() -> dict:
+    result = reset_database()
+    return {"status": "ok", "result": result}
 
 
 def main() -> None:
