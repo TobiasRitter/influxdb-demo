@@ -1,17 +1,16 @@
 from __future__ import annotations
 
 import os
-import sys
 
 from influxdb_client_3 import InfluxDBClient3, Point
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 import pandas as pd
 
 
 app = FastAPI()
 
 
-def add_sample_point(
+def add_sample(
     client: InfluxDBClient3.InfluxDBClient3, location: str, temperature: float
 ) -> None:
     point = (
@@ -22,22 +21,14 @@ def add_sample_point(
     client.write(point)
 
 
-def write_sample_points(client: InfluxDBClient3.InfluxDBClient3) -> None:
-    add_sample_point(client, "office", 22.5)
-    add_sample_point(client, "lab", 23.0)
-    add_sample_point(client, "warehouse", 19.8)
-
-
-def query_and_print(client: InfluxDBClient3.InfluxDBClient3) -> pd.DataFrame | None:
+def get_samples(client: InfluxDBClient3.InfluxDBClient3) -> pd.DataFrame | None:
     sql = "SELECT * FROM demo_measurement ORDER BY time DESC"
     print(f"\nRunning SQL query: {sql}\n")
 
     try:
         df = client.query_dataframe(sql)
-        print(df.to_markdown())
         return df
     except Exception as exc:
-        print("Query failed:", exc, file=sys.stderr)
         return None
 
 
@@ -56,9 +47,14 @@ def main() -> None:
     client = InfluxDBClient3(token=TOKEN, host=HOST, database=DATABASE)
     with client:
         print("Writing 3 sample points...")
-        write_sample_points(client)
+        add_sample(client, "office", 22.5)
+        add_sample(client, "lab", 23.0)
+        add_sample(client, "warehouse", 19.8)
         print("Write complete.")
-        query_and_print(client)
+
+        df = get_samples(client)
+        if df is not None:
+            print(df.to_markdown())
 
 
 if __name__ == "__main__":
