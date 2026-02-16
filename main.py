@@ -49,7 +49,7 @@ async def get_samples() -> str:
         return read_samples(client).to_markdown()
 
 
-@app.post("/samples")
+@app.post("/sample")
 async def add_sample(location: str, temperature: float) -> str:
     client = InfluxDBClient3(token=TOKEN, host=HOST, database=DATABASE)
     with client:
