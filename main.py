@@ -16,13 +16,14 @@ app = FastAPI()
 
 def write_sample(
     client: InfluxDBClient3.InfluxDBClient3, location: str, temperature: float
-) -> None:
+) -> Point:
     point = (
         Point("demo_measurement")
         .tag("location", location)
         .field("temperature", temperature)
     )
     client.write(point)
+    return point
 
 
 def read_samples(client: InfluxDBClient3.InfluxDBClient3) -> pd.DataFrame | None:
@@ -46,6 +47,13 @@ async def get_samples() -> str:
     client = InfluxDBClient3(token=TOKEN, host=HOST, database=DATABASE)
     with client:
         return read_samples(client).to_markdown()
+
+
+@app.post("/samples")
+async def add_sample(location: str, temperature: float) -> str:
+    client = InfluxDBClient3(token=TOKEN, host=HOST, database=DATABASE)
+    with client:
+        return write_sample(client, location, temperature)
 
 
 def main() -> None:
