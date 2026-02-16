@@ -26,18 +26,9 @@ def query_and_print(client: InfluxDBClient3.InfluxDBClient3) -> None:
     print(f"\nRunning SQL query: {sql}\n")
 
     try:
-        # convenience: returns a pandas DataFrame when pandas is installed
         df = client.query_dataframe(sql)
-
-        # pretty-print if pandas available
-        try:
-            import pandas as pd  # noqa: F401
-
-            print(df.to_markdown())
-        except Exception:
-            print(df)
-
-    except Exception as exc:  # pragma: no cover - runtime network/credentials
+        print(df.to_markdown())
+    except Exception as exc:
         print("Query failed:", exc, file=sys.stderr)
 
 
