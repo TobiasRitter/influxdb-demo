@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 import os
+import requests
 
 from influxdb_client_3 import InfluxDBClient3, Point
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 import pandas as pd
 
 
@@ -35,6 +36,29 @@ def read_samples(client: InfluxDBClient3.InfluxDBClient3) -> pd.DataFrame | None
         return df
     except Exception as exc:
         return None
+
+
+def reset_database() -> str:
+    base = HOST.rstrip("/")
+    headers = {"Authorization": f"Bearer {TOKEN}"}
+
+    url = f"{base}/api/v3/configure/table"
+    params = {"db": DATABASE, "table": "demo_measurement"}
+    resp = requests.delete(url, headers=headers, params=params, timeout=10)
+
+    if resp.status_code in (200, 204):
+        return f"table demo_measurement deleted (status {resp.status_code})"
+
+    if resp.status_code == 404:
+        return f"table demo_measurement not found (status 404)"
+
+    raise RuntimeError(f"failed to delete table: {resp.status_code} {resp.text}")
+
+
+@app.post("/reset")
+async def reset_endpoint() -> dict:
+    result = reset_database()
+    return {"status": "ok", "result": result}
 
 
 @app.get("/")
