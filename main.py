@@ -7,10 +7,14 @@ from fastapi import FastAPI
 import pandas as pd
 
 
+HOST = os.getenv("INFLUX_HOST", "http://localhost:8181")
+TOKEN = os.getenv("INFLUX_TOKEN")
+DATABASE = os.getenv("INFLUX_DATABASE", "demo")
+
 app = FastAPI()
 
 
-def add_sample(
+def write_sample(
     client: InfluxDBClient3.InfluxDBClient3, location: str, temperature: float
 ) -> None:
     point = (
@@ -21,7 +25,7 @@ def add_sample(
     client.write(point)
 
 
-def get_samples(client: InfluxDBClient3.InfluxDBClient3) -> pd.DataFrame | None:
+def read_samples(client: InfluxDBClient3.InfluxDBClient3) -> pd.DataFrame | None:
     sql = "SELECT * FROM demo_measurement ORDER BY time DESC"
     print(f"\nRunning SQL query: {sql}\n")
 
@@ -32,11 +36,19 @@ def get_samples(client: InfluxDBClient3.InfluxDBClient3) -> pd.DataFrame | None:
         return None
 
 
-def main() -> None:
-    HOST = os.getenv("INFLUX_HOST", "http://localhost:8181")
-    TOKEN = os.getenv("INFLUX_TOKEN")
-    DATABASE = os.getenv("INFLUX_DATABASE", "demo")
+@app.get("/")
+async def root() -> str:
+    return "Hello, World!"
 
+
+@app.get("/samples")
+async def get_samples() -> str:
+    client = InfluxDBClient3(token=TOKEN, host=HOST, database=DATABASE)
+    with client:
+        return read_samples(client).to_markdown()
+
+
+def main() -> None:
     if not TOKEN:
         raise ValueError(
             "INFLUX_TOKEN environment variable is required for authentication. Please set it and try again."
@@ -47,25 +59,15 @@ def main() -> None:
     client = InfluxDBClient3(token=TOKEN, host=HOST, database=DATABASE)
     with client:
         print("Writing 3 sample points...")
-        add_sample(client, "office", 22.5)
-        add_sample(client, "lab", 23.0)
-        add_sample(client, "warehouse", 19.8)
+        write_sample(client, "office", 22.5)
+        write_sample(client, "lab", 23.0)
+        write_sample(client, "warehouse", 19.8)
         print("Write complete.")
 
-        df = get_samples(client)
+        df = read_samples(client)
         if df is not None:
             print(df.to_markdown())
 
 
 if __name__ == "__main__":
     main()
-
-
-@app.get("/")
-async def root() -> str:
-    return "Hello, World!"
-
-
-@app.get("/greet/{name}")
-async def greet(name: str) -> str:
-    return f"Hello, {name}!"
