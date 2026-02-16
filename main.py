@@ -53,7 +53,7 @@ async def get_samples() -> str:
 async def add_sample(location: str, temperature: float) -> str:
     client = InfluxDBClient3(token=TOKEN, host=HOST, database=DATABASE)
     with client:
-        return write_sample(client, location, temperature)
+        return str(write_sample(client, location, temperature))
 
 
 def main() -> None:
