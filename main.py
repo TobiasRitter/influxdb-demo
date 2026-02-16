@@ -11,18 +11,21 @@ import pandas as pd
 app = FastAPI()
 
 
-def write_sample_points(client: InfluxDBClient3.InfluxDBClient3) -> None:
-    p1 = Point("demo_measurement").tag("location", "office").field("temperature", 22.5)
-    p2 = Point("demo_measurement").tag("location", "lab").field("temperature", 23.0)
-    p3 = (
+def add_sample_point(
+    client: InfluxDBClient3.InfluxDBClient3, location: str, temperature: float
+) -> None:
+    point = (
         Point("demo_measurement")
-        .tag("location", "warehouse")
-        .field("temperature", 19.8)
+        .tag("location", location)
+        .field("temperature", temperature)
     )
+    client.write(point)
 
-    client.write(p1)
-    client.write(p2)
-    client.write(p3)
+
+def write_sample_points(client: InfluxDBClient3.InfluxDBClient3) -> None:
+    add_sample_point(client, "office", 22.5)
+    add_sample_point(client, "lab", 23.0)
+    add_sample_point(client, "warehouse", 19.8)
 
 
 def query_and_print(client: InfluxDBClient3.InfluxDBClient3) -> pd.DataFrame | None:
