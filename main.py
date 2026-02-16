@@ -15,14 +15,13 @@ def write_sample_points(client: InfluxDBClient3.InfluxDBClient3) -> None:
         .field("temperature", 19.8)
     )
 
-    # write (client was created with a default database)
     client.write(p1)
     client.write(p2)
     client.write(p3)
 
 
 def query_and_print(client: InfluxDBClient3.InfluxDBClient3) -> None:
-    sql = "SELECT * FROM demo_measurement ORDER BY time DESC LIMIT 10"
+    sql = "SELECT * FROM demo_measurement ORDER BY time DESC"
     print(f"\nRunning SQL query: {sql}\n")
 
     try:
