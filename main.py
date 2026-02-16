@@ -1,23 +1,6 @@
-#!/usr/bin/env python3
-"""Simple InfluxDB 3 (Core) demo using the `influxdb3-python` client.
-
-- Reads connection info from environment variables (or .env)
-- Writes a few sample points
-- Queries recent rows and prints them (as DataFrame if pandas is installed)
-
-Set these environment variables (or copy `.env.example` -> `.env`):
-  INFLUX_HOST (default: http://localhost:8181)
-  INFLUX_TOKEN
-  INFLUX_DATABASE (default: demo)
-
-Run: python examples/demo_influxdb3.py
-"""
-
 from __future__ import annotations
-
 import os
 import sys
-from datetime import datetime, timezone
 
 # optional: load a local .env file if present (no hard dependency)
 try:
