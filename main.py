@@ -5,6 +5,7 @@ import sys
 
 from influxdb_client_3 import InfluxDBClient3, Point
 from fastapi import FastAPI, Request
+import pandas as pd
 
 
 app = FastAPI()
@@ -24,15 +25,17 @@ def write_sample_points(client: InfluxDBClient3.InfluxDBClient3) -> None:
     client.write(p3)
 
 
-def query_and_print(client: InfluxDBClient3.InfluxDBClient3) -> None:
+def query_and_print(client: InfluxDBClient3.InfluxDBClient3) -> pd.DataFrame | None:
     sql = "SELECT * FROM demo_measurement ORDER BY time DESC"
     print(f"\nRunning SQL query: {sql}\n")
 
     try:
         df = client.query_dataframe(sql)
         print(df.to_markdown())
+        return df
     except Exception as exc:
         print("Query failed:", exc, file=sys.stderr)
+        return None
 
 
 def main() -> None:
