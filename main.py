@@ -9,9 +9,9 @@ from fastapi import FastAPI
 import pandas as pd
 
 
-HOST = os.getenv("INFLUX_HOST", "http://localhost:8181")
+HOST = "http://localhost:8181"
+DATABASE = "demo"
 TOKEN = os.getenv("INFLUX_TOKEN")
-DATABASE = os.getenv("INFLUX_DATABASE", "demo")
 
 app = FastAPI()
 
