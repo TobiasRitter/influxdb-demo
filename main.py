@@ -97,9 +97,9 @@ def main() -> None:
     client = InfluxDBClient3(token=TOKEN, host=HOST, database=DATABASE)
     with client:
         print("Writing 3 sample points...")
-        write_sample(client, "office", 22.5)
-        write_sample(client, "lab", 23.0)
-        write_sample(client, "warehouse", 19.8)
+        write_sample(client, 1, 100)
+        write_sample(client, 2, 200)
+        write_sample(client, 3, 300)
         print("Write complete.")
 
         df = read_samples(client)
