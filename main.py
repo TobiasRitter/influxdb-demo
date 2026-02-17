@@ -6,6 +6,7 @@ import requests
 from influxdb_client_3 import InfluxDBClient3, Point
 from fastapi import FastAPI, HTTPException
 import pandas as pd
+from datetime import datetime
 
 
 HOST = os.getenv("INFLUX_HOST", "http://localhost:8181")
@@ -16,12 +17,16 @@ app = FastAPI()
 
 
 def write_sample(
-    client: InfluxDBClient3.InfluxDBClient3, location: str, temperature: float
+    client: InfluxDBClient3.InfluxDBClient3,
+    location: str,
+    temperature: float,
+    dt: datetime,
 ) -> Point:
     point = (
         Point("demo_measurement")
         .tag("location", location)
         .field("temperature", temperature)
+        .time(dt)
     )
     client.write(point)
     return point
