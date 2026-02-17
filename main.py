@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 import os
-from typing import Any
 import requests
 
 from influxdb_client_3 import InfluxDBClient3, Point
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 import pandas as pd
 
 
@@ -14,6 +14,13 @@ DATABASE = "demo"
 TOKEN = os.getenv("INFLUX_TOKEN")
 
 app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 def write_sample(
@@ -97,9 +104,9 @@ def main() -> None:
     client = InfluxDBClient3(token=TOKEN, host=HOST, database=DATABASE)
     with client:
         print("Writing 3 sample points...")
-        write_sample(client, 1, 100)
-        write_sample(client, 2, 200)
-        write_sample(client, 3, 300)
+        write_sample(client, 1, 100000000)
+        write_sample(client, 2, 200000000)
+        write_sample(client, 3, 300000000)
         print("Write complete.")
 
         df = read_samples(client)
