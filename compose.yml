@@ -1,0 +1,16 @@
+name: influxdb3
+services:
+  influxdb3-core:
+    container_name: influxdb3-core
+    image: influxdb:3-core
+    ports:
+      - 8181:8181
+    environment:
+      - INFLUXDB3_ADMIN_TOKEN_FILE=/var/lib/influxdb3/admin_token.json
+    command:
+      - influxdb3
+      - serve
+      - --node-id=node0
+      - --object-store=file
+    volumes:
+      - ./admin_token.json:/var/lib/influxdb3/admin_token.json:ro

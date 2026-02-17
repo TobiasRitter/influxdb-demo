@@ -4,25 +4,31 @@ import os
 import requests
 
 from influxdb_client_3 import InfluxDBClient3, Point
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 import pandas as pd
 
 
-HOST = os.getenv("INFLUX_HOST", "http://localhost:8181")
+HOST = "http://localhost:8181"
+DATABASE = "demo"
 TOKEN = os.getenv("INFLUX_TOKEN")
-DATABASE = os.getenv("INFLUX_DATABASE", "demo")
 
 app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 def write_sample(
-    client: InfluxDBClient3.InfluxDBClient3, location: str, temperature: float
+    client: InfluxDBClient3.InfluxDBClient3,
+    current: float,
+    timestamp: int,
 ) -> Point:
-    point = (
-        Point("demo_measurement")
-        .tag("location", location)
-        .field("temperature", temperature)
-    )
+    point = Point("demo_measurement").field("current", current).time(timestamp)
     client.write(point)
     return point
 
@@ -72,10 +78,13 @@ async def get_samples() -> str:
 
 
 @app.post("/sample")
-async def add_sample(location: str, temperature: float) -> str:
+async def add_sample(
+    current: float,
+    timestamp: int,
+) -> str:
     client = InfluxDBClient3(token=TOKEN, host=HOST, database=DATABASE)
     with client:
-        return str(write_sample(client, location, temperature))
+        return str(write_sample(client, current, timestamp))
 
 
 @app.delete("/reset")
@@ -95,9 +104,9 @@ def main() -> None:
     client = InfluxDBClient3(token=TOKEN, host=HOST, database=DATABASE)
     with client:
         print("Writing 3 sample points...")
-        write_sample(client, "office", 22.5)
-        write_sample(client, "lab", 23.0)
-        write_sample(client, "warehouse", 19.8)
+        write_sample(client, 1, 100000000)
+        write_sample(client, 2, 200000000)
+        write_sample(client, 3, 300000000)
         print("Write complete.")
 
         df = read_samples(client)
