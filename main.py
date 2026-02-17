@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+from typing import Any
 import requests
 
 from influxdb_client_3 import InfluxDBClient3, Point
@@ -17,14 +18,14 @@ app = FastAPI()
 
 def write_sample(
     client: InfluxDBClient3.InfluxDBClient3,
-    location: str,
-    temperature: float,
-    timestamp: str,
+    tag: tuple[Any, Any],
+    field: tuple[Any, Any],
+    timestamp: Any,
 ) -> Point:
     point = (
         Point("demo_measurement")
-        .tag("location", location)
-        .field("temperature", temperature)
+        .tag(tag[0], tag[1])
+        .field(field[0], field[1])
         .time(timestamp)
     )
     client.write(point)
@@ -76,10 +77,14 @@ async def get_samples() -> str:
 
 
 @app.post("/sample")
-async def add_sample(location: str, temperature: float, timestamp: str) -> str:
+async def add_sample(
+    tag: tuple[Any, Any],
+    field: tuple[Any, Any],
+    timestamp: Any,
+) -> str:
     client = InfluxDBClient3(token=TOKEN, host=HOST, database=DATABASE)
     with client:
-        return str(write_sample(client, location, temperature, timestamp))
+        return str(write_sample(client, tag, field, timestamp))
 
 
 @app.delete("/reset")
