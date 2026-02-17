@@ -18,16 +18,10 @@ app = FastAPI()
 
 def write_sample(
     client: InfluxDBClient3.InfluxDBClient3,
-    tag: tuple[Any, Any],
-    field: tuple[Any, Any],
-    timestamp: Any,
+    current: float,
+    timestamp: int,
 ) -> Point:
-    point = (
-        Point("demo_measurement")
-        .tag(tag[0], tag[1])
-        .field(field[0], field[1])
-        .time(timestamp)
-    )
+    point = Point("demo_measurement").field("current", current).time(timestamp)
     client.write(point)
     return point
 
@@ -78,13 +72,12 @@ async def get_samples() -> str:
 
 @app.post("/sample")
 async def add_sample(
-    tag: tuple[Any, Any],
-    field: tuple[Any, Any],
-    timestamp: Any,
+    current: float,
+    timestamp: int,
 ) -> str:
     client = InfluxDBClient3(token=TOKEN, host=HOST, database=DATABASE)
     with client:
-        return str(write_sample(client, tag, field, timestamp))
+        return str(write_sample(client, current, timestamp))
 
 
 @app.delete("/reset")
