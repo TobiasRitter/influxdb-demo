@@ -9,3 +9,4 @@ __pycache__
 data/
 plugins/
 admin_token.json
+*.parquet
