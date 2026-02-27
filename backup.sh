@@ -52,7 +52,7 @@ influxdb3 query \
   --host "$host" \
   --token "$token" \
   --database "$db" \
-  --format parquet \
+  --format csv \
   --output "$outfile" \
   "$sql"
 
