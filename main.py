@@ -28,7 +28,12 @@ def write_sample(
     current: float,
     timestamp: int,
 ) -> Point:
-    point = Point("demo_measurement").field("current", current).time(timestamp)
+    point = (
+        Point("demo_measurement")
+        .field("current", current)
+        .time(timestamp)
+        .tag("unit", "A")
+    )
     client.write(point)
     return point
 
