@@ -12,9 +12,8 @@ services:
       - serve
       - --node-id=node0
       - --object-store=file
-      - --data-dir=/var/lib/influxdb3  
     volumes:
-      - ./data:/var/lib/influxdb3  
+      - ./data:/home/influxdb3/.influxdb 
       - ./admin_token.json:/var/lib/influxdb3/admin_token.json:ro
 
 volumes:
