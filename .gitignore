@@ -11,3 +11,4 @@ plugins/
 admin_token.json
 *.parquet
 *.csv
+backup/
