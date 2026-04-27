@@ -10,8 +10,8 @@ from fastapi.middleware.cors import CORSMiddleware
 import pandas as pd
 
 
-HOST = "http://localhost:8181"
-DATABASE = "demo"
+HOST = os.getenv("INFLUX_HOST", "http://localhost:8181")
+DATABASE = os.getenv("INFLUX_DATABASE", "demo")
 TOKEN = os.getenv("INFLUX_TOKEN")
 
 app = FastAPI()
