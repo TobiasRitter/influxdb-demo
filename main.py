@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 import os
 import requests
 
@@ -23,15 +24,20 @@ app.add_middleware(
 )
 
 
+@dataclass
+class Sample:
+    current: float
+    timestamp: int
+
+
 def write_sample(
     client: InfluxDBClient3.InfluxDBClient3,
-    current: float,
-    timestamp: int,
+    sample: Sample,
 ) -> Point:
     point = (
         Point("demo_measurement")
-        .field("current", current)
-        .time(timestamp)
+        .field("current", sample.current)
+        .time(sample.timestamp)
         .tag("unit", "A")
     )
     client.write(point)
@@ -84,12 +90,11 @@ async def get_samples() -> str:
 
 @app.post("/sample")
 async def add_sample(
-    current: float,
-    timestamp: int,
+    sample: Sample,
 ) -> str:
     client = InfluxDBClient3(token=TOKEN, host=HOST, database=DATABASE)
     with client:
-        return str(write_sample(client, current, timestamp))
+        return str(write_sample(client, sample))
 
 
 @app.delete("/reset")
@@ -109,9 +114,9 @@ def main() -> None:
     client = InfluxDBClient3(token=TOKEN, host=HOST, database=DATABASE)
     with client:
         print("Writing 3 sample points...")
-        write_sample(client, 1, 100000000)
-        write_sample(client, 2, 200000000)
-        write_sample(client, 3, 300000000)
+        write_sample(client, Sample(current=1.0, timestamp=100000000))
+        write_sample(client, Sample(current=2.0, timestamp=200000000))
+        write_sample(client, Sample(current=3.0, timestamp=300000000))
         print("Write complete.")
 
         df = read_samples(client)
