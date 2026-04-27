@@ -88,13 +88,14 @@ async def get_samples() -> str:
             return "No samples available"
 
 
-@app.post("/sample")
-async def add_sample(
-    sample: Sample,
-) -> str:
+@app.post("/samples")
+async def add_samples(
+    samples: list[Sample],
+) -> list[str]:
     client = InfluxDBClient3(token=TOKEN, host=HOST, database=DATABASE)
     with client:
-        return str(write_sample(client, sample))
+        inserted = [write_sample(client, sample) for sample in samples]
+        return [str(point) for point in inserted]
 
 
 @app.delete("/reset")
