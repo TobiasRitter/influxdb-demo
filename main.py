@@ -29,6 +29,7 @@ class Sample:
     value: float
     timestamp: int
     unit: str
+    name: str
 
 
 def write_sample(
@@ -41,6 +42,7 @@ def write_sample(
         .field("value", sample.value)
         .time(sample.timestamp)
         .tag("unit", sample.unit)
+        .tag("name", sample.name)
     )
     print(f"Constructed point: {point}")
     client.write(point)
