@@ -29,7 +29,7 @@ class Sample:
     value: float
     timestamp: int
     unit: str
-    name: str
+    signal_id: str
 
 
 def write_sample(
@@ -41,7 +41,7 @@ def write_sample(
         .field("value", sample.value)
         .time(sample.timestamp)
         .tag("unit", sample.unit)
-        .tag("name", sample.name)
+        .tag("signal_id", sample.signal_id)
     )
     client.write(point)
     return point
