@@ -36,7 +36,6 @@ def write_sample(
     client: InfluxDBClient3.InfluxDBClient3,
     sample: Sample,
 ) -> Point:
-    print(f"Writing sample: {sample}")
     point = (
         Point("demo_measurement")
         .field("value", sample.value)
@@ -44,14 +43,12 @@ def write_sample(
         .tag("unit", sample.unit)
         .tag("name", sample.name)
     )
-    print(f"Constructed point: {point}")
     client.write(point)
     return point
 
 
 def read_samples(client: InfluxDBClient3.InfluxDBClient3) -> pd.DataFrame | None:
     sql = "SELECT * FROM demo_measurement ORDER BY time DESC"
-    print(f"\nRunning SQL query: {sql}\n")
 
     try:
         df = client.query_dataframe(sql)
