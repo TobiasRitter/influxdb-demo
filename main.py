@@ -28,6 +28,7 @@ app.add_middleware(
 class Sample:
     value: float
     timestamp: int
+    unit: str
 
 
 def write_sample(
@@ -39,7 +40,7 @@ def write_sample(
         Point("demo_measurement")
         .field("value", sample.value)
         .time(sample.timestamp)
-        .tag("unit", "A")
+        .tag("unit", sample.unit)
     )
     print(f"Constructed point: {point}")
     client.write(point)
