@@ -44,7 +44,6 @@ def write_sample(
         .tag("unit", sample.unit)
         .tag("signal_id", sample.signal_id)
     )
-    print(f"Writing point: {point}")
     client.write(point)
     return point
 
