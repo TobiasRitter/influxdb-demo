@@ -34,10 +34,11 @@ class Sample:
 
 def write_sample(
     client: InfluxDBClient3.InfluxDBClient3,
+    measurement: str,
     sample: Sample,
 ) -> Point:
     point = (
-        Point("demo_measurement")
+        Point(measurement)
         .field("value", sample.value)
         .time(sample.timestamp)
         .tag("unit", sample.unit)
@@ -92,11 +93,12 @@ async def get_samples() -> str:
 
 @app.post("/samples")
 async def add_samples(
+    measurement: str,
     samples: list[Sample],
 ) -> list[str]:
     client = InfluxDBClient3(token=TOKEN, host=HOST, database=DATABASE)
     with client:
-        inserted = [write_sample(client, sample) for sample in samples]
+        inserted = [write_sample(client, measurement, sample) for sample in samples]
         return [str(point) for point in inserted]
 
 
