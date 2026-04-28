@@ -48,8 +48,10 @@ def write_sample(
     return point
 
 
-def read_samples(client: InfluxDBClient3.InfluxDBClient3) -> pd.DataFrame | None:
-    sql = "SELECT * FROM demo_measurement ORDER BY time DESC"
+def read_samples(
+    client: InfluxDBClient3.InfluxDBClient3, measurement: str
+) -> pd.DataFrame | None:
+    sql = f"SELECT * FROM {measurement} ORDER BY time DESC"
 
     try:
         df = client.query_dataframe(sql)
@@ -80,11 +82,11 @@ async def root() -> str:
     return "Hello, World!"
 
 
-@app.get("/samples")
-async def get_samples() -> str:
+@app.get("/samples/{measurement}")
+async def get_samples(measurement: str) -> str:
     client = InfluxDBClient3(token=TOKEN, host=HOST, database=DATABASE)
     with client:
-        df = read_samples(client)
+        df = read_samples(client, measurement)
         if df is not None:
             return df.to_json(orient="records")
         else:
