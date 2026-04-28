@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 import os
 import requests
 
@@ -9,8 +10,8 @@ from fastapi.middleware.cors import CORSMiddleware
 import pandas as pd
 
 
-HOST = "http://localhost:8181"
-DATABASE = "demo"
+HOST = os.getenv("INFLUX_HOST", "http://localhost:8181")
+DATABASE = os.getenv("INFLUX_DATABASE", "demo")
 TOKEN = os.getenv("INFLUX_TOKEN")
 
 app = FastAPI()
@@ -23,17 +24,24 @@ app.add_middleware(
 )
 
 
+@dataclass
+class Sample:
+    current: float
+    timestamp: int
+
+
 def write_sample(
     client: InfluxDBClient3.InfluxDBClient3,
-    current: float,
-    timestamp: int,
+    sample: Sample,
 ) -> Point:
+    print(f"Writing sample: {sample}")
     point = (
         Point("demo_measurement")
-        .field("current", current)
-        .time(timestamp)
+        .field("current", sample.current)
+        .time(sample.timestamp)
         .tag("unit", "A")
     )
+    print(f"Constructed point: {point}")
     client.write(point)
     return point
 
@@ -82,42 +90,17 @@ async def get_samples() -> str:
             return "No samples available"
 
 
-@app.post("/sample")
-async def add_sample(
-    current: float,
-    timestamp: int,
-) -> str:
+@app.post("/samples")
+async def add_samples(
+    samples: list[Sample],
+) -> list[str]:
     client = InfluxDBClient3(token=TOKEN, host=HOST, database=DATABASE)
     with client:
-        return str(write_sample(client, current, timestamp))
+        inserted = [write_sample(client, sample) for sample in samples]
+        return [str(point) for point in inserted]
 
 
 @app.delete("/reset")
 async def reset_endpoint() -> dict:
     result = reset_database()
     return {"status": "ok", "result": result}
-
-
-def main() -> None:
-    if not TOKEN:
-        raise ValueError(
-            "INFLUX_TOKEN environment variable is required for authentication. Please set it and try again."
-        )
-
-    print(f"Connecting to InfluxDB host={HOST!r} database={DATABASE!r}")
-
-    client = InfluxDBClient3(token=TOKEN, host=HOST, database=DATABASE)
-    with client:
-        print("Writing 3 sample points...")
-        write_sample(client, 1, 100000000)
-        write_sample(client, 2, 200000000)
-        write_sample(client, 3, 300000000)
-        print("Write complete.")
-
-        df = read_samples(client)
-        if df is not None:
-            print(df.to_markdown())
-
-
-if __name__ == "__main__":
-    main()

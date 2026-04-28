@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+venv/
+.env
+.env.*
+admin_token.json
+data/
+backup/
