@@ -34,12 +34,14 @@ def write_sample(
     client: InfluxDBClient3.InfluxDBClient3,
     sample: Sample,
 ) -> Point:
+    print(f"Writing sample: {sample}")
     point = (
         Point("demo_measurement")
-        .field("current", 1)
+        .field("current", sample.current)
         .time(sample.timestamp)
         .tag("unit", "A")
     )
+    print(f"Constructed point: {point}")
     client.write(point)
     return point
 
