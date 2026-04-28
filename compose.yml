@@ -13,7 +13,7 @@ services:
       - --node-id=node0
       - --object-store=file
     volumes:
-      - ./data:/home/influxdb3/.influxdb 
+      - ./data:/home/influxdb3/.influxdb
       - ./admin_token.json:/var/lib/influxdb3/admin_token.json:ro
 
   python-backend:
@@ -21,6 +21,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        - INFLUX_TOKEN=${INFLUX_TOKEN}
     depends_on:
       - influxdb3-core
     working_dir: /app
@@ -28,10 +30,6 @@ services:
       - ./:/app
     ports:
       - 8000:8000
-    environment:
-      - INFLUX_TOKEN=${INFLUX_TOKEN}
-      - INFLUX_HOST=http://influxdb3-core:8181
-      - INFLUX_DATABASE=demo
 
 volumes:
   data:

@@ -104,26 +104,26 @@ async def reset_endpoint() -> dict:
     return {"status": "ok", "result": result}
 
 
-def main() -> None:
-    if not TOKEN:
-        raise ValueError(
-            "INFLUX_TOKEN environment variable is required for authentication. Please set it and try again."
-        )
+# def main() -> None:
+#     if not TOKEN:
+#         raise ValueError(
+#             "INFLUX_TOKEN environment variable is required for authentication. Please set it and try again."
+#         )
 
-    print(f"Connecting to InfluxDB host={HOST!r} database={DATABASE!r}")
+#     print(f"Connecting to InfluxDB host={HOST!r} database={DATABASE!r}")
 
-    client = InfluxDBClient3(token=TOKEN, host=HOST, database=DATABASE)
-    with client:
-        print("Writing 3 sample points...")
-        write_sample(client, Sample(current=1.0, timestamp=100000000))
-        write_sample(client, Sample(current=2.0, timestamp=200000000))
-        write_sample(client, Sample(current=3.0, timestamp=300000000))
-        print("Write complete.")
+#     client = InfluxDBClient3(token=TOKEN, host=HOST, database=DATABASE)
+#     with client:
+#         print("Writing 3 sample points...")
+#         write_sample(client, Sample(current=1.0, timestamp=100000000))
+#         write_sample(client, Sample(current=2.0, timestamp=200000000))
+#         write_sample(client, Sample(current=3.0, timestamp=300000000))
+#         print("Write complete.")
 
-        df = read_samples(client)
-        if df is not None:
-            print(df.to_markdown())
+#         df = read_samples(client)
+#         if df is not None:
+#             print(df.to_markdown())
 
 
-if __name__ == "__main__":
-    main()
+# if __name__ == "__main__":
+#     main()

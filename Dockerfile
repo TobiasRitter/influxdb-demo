@@ -1,5 +1,8 @@
 FROM python:3.12-slim
 
+ARG INFLUX_TOKEN
+ENV INFLUX_TOKEN=${INFLUX_TOKEN}
+
 WORKDIR /app
 
 COPY requirements.txt .
