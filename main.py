@@ -26,7 +26,7 @@ app.add_middleware(
 
 @dataclass
 class Sample:
-    current: float
+    value: float
     timestamp: int
 
 
@@ -37,7 +37,7 @@ def write_sample(
     print(f"Writing sample: {sample}")
     point = (
         Point("demo_measurement")
-        .field("current", sample.current)
+        .field("value", sample.value)
         .time(sample.timestamp)
         .tag("unit", "A")
     )
