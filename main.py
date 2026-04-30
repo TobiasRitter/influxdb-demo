@@ -64,7 +64,12 @@ def read_samples(
     measurement: str,
     signal_id: str,
 ) -> pd.DataFrame | None:
-    sql = f"SELECT * FROM {measurement} ORDER BY time DESC WHERE signal_id = '{signal_id}'"
+    quoted_measurement = measurement.replace('"', '""')
+    sql = (
+        f'SELECT * FROM "{quoted_measurement}" '
+        f"WHERE signal_id = '{signal_id}' "
+        "ORDER BY time DESC"
+    )
 
     try:
         df = client.query_dataframe(sql)
