@@ -73,19 +73,22 @@ def read_samples(
         return None
 
 
-def write_sample(
+def write_samples(
     client: InfluxDBClient3.InfluxDBClient3,
     measurement: str,
-    sample: Sample,
-) -> Point:
-    point = (
-        Point(measurement)
-        .field("value", sample.value)
-        .time(sample.timestamp)
-        .tag("signal_id", sample.signal_id)
-    )
-    client.write(point)
-    return point
+    samples: list[Sample],
+) -> list[Point]:
+    points = [
+        (
+            Point(measurement)
+            .field("value", sample.value)
+            .time(sample.timestamp)
+            .tag("signal_id", sample.signal_id)
+        )
+        for sample in samples
+    ]
+    client.write_points(points)
+    return points
 
 
 def reset_database() -> str:
@@ -141,7 +144,7 @@ async def add_samples(
 ) -> list[str]:
     client = InfluxDBClient3(token=TOKEN, host=HOST, database=DATABASE)
     with client:
-        inserted = [write_sample(client, measurement, sample) for sample in samples]
+        inserted = write_samples(client, measurement, samples)
         return [str(point) for point in inserted]
 
 
