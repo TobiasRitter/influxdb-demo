@@ -27,7 +27,6 @@ app.add_middleware(
 class Sample:
     value: float
     timestamp: int
-    signal_id: str
 
 
 def get_measurements(
@@ -82,6 +81,7 @@ def read_samples(
 def write_samples(
     client: InfluxDBClient3.InfluxDBClient3,
     measurement: str,
+    signal_id: str,
     samples: list[Sample],
 ) -> list[Point]:
     points = [
@@ -89,7 +89,7 @@ def write_samples(
             Point(measurement)
             .field("value", sample.value)
             .time(sample.timestamp)
-            .tag("signal_id", sample.signal_id)
+            .tag("signal_id", signal_id)
         )
         for sample in samples
     ]
@@ -143,11 +143,12 @@ async def get_samples(measurement: str, signal_id: str) -> str:
 @app.post("/samples")
 async def add_samples(
     measurement: str,
+    signal_id: str,
     samples: list[Sample],
 ) -> list[str]:
     client = InfluxDBClient3(token=TOKEN, host=HOST, database=DATABASE)
     with client:
-        inserted = write_samples(client, measurement, samples)
+        inserted = write_samples(client, measurement, signal_id, samples)
         return [str(point) for point in inserted]
 
 
