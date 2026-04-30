@@ -9,7 +9,6 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import pandas as pd
 
-
 HOST = os.getenv("INFLUX_HOST", "http://localhost:8181")
 DATABASE = os.getenv("INFLUX_DATABASE", "demo")
 TOKEN = os.getenv("INFLUX_TOKEN")
@@ -46,10 +45,27 @@ def write_sample(
     return point
 
 
-def read_samples(
+def get_signals(
     client: InfluxDBClient3.InfluxDBClient3, measurement: str
+) -> list[str] | None:
+    sql = f"SHOW TAG VALUES FROM {measurement} WITH KEY = signal_id"
+
+    try:
+        df = client.query_dataframe(sql)
+        return df["signal_id"].tolist()
+    except Exception as exc:
+        print(f"Error reading signals: {exc}")
+        return None
+
+
+def read_samples(
+    client: InfluxDBClient3.InfluxDBClient3,
+    measurement: str,
+    signal_id: str,
 ) -> pd.DataFrame | None:
     sql = f"SELECT * FROM {measurement} ORDER BY time DESC"
+    if signal_id is not None:
+        sql += f" WHERE signal_id = '{signal_id}'"
 
     try:
         df = client.query_dataframe(sql)
@@ -82,10 +98,21 @@ async def root() -> str:
 
 
 @app.get("/samples/{measurement}")
-async def get_samples(measurement: str) -> str:
+async def get_signals(measurement: str) -> list[str]:
     client = InfluxDBClient3(token=TOKEN, host=HOST, database=DATABASE)
     with client:
-        df = read_samples(client, measurement)
+        signals = get_signals(client, measurement)
+        if signals is not None:
+            return signals
+        else:
+            return []
+
+
+@app.get("/samples/{measurement}/{signal_id}")
+async def get_samples(measurement: str, signal_id: str) -> str:
+    client = InfluxDBClient3(token=TOKEN, host=HOST, database=DATABASE)
+    with client:
+        df = read_samples(client, measurement, signal_id)
         if df is not None:
             return df.to_json(orient="records")
         else:
