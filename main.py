@@ -93,8 +93,7 @@ def write_samples(
         )
         for sample in samples
     ]
-    for point in points:
-        client.write(point)
+    client.write(points)
     return points
 
 
