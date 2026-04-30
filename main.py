@@ -30,19 +30,17 @@ class Sample:
     signal_id: str
 
 
-def write_sample(
+def get_measurements(
     client: InfluxDBClient3.InfluxDBClient3,
-    measurement: str,
-    sample: Sample,
-) -> Point:
-    point = (
-        Point(measurement)
-        .field("value", sample.value)
-        .time(sample.timestamp)
-        .tag("signal_id", sample.signal_id)
-    )
-    client.write(point)
-    return point
+) -> list[str] | None:
+    sql = "SHOW MEASUREMENTS"
+
+    try:
+        df = client.query_dataframe(sql)
+        return df["name"].tolist()
+    except Exception as exc:
+        print(f"Error reading measurements: {exc}")
+        return None
 
 
 def get_signals(
@@ -75,6 +73,21 @@ def read_samples(
         return None
 
 
+def write_sample(
+    client: InfluxDBClient3.InfluxDBClient3,
+    measurement: str,
+    sample: Sample,
+) -> Point:
+    point = (
+        Point(measurement)
+        .field("value", sample.value)
+        .time(sample.timestamp)
+        .tag("signal_id", sample.signal_id)
+    )
+    client.write(point)
+    return point
+
+
 def reset_database() -> str:
     base = HOST.rstrip("/")
     headers = {"Authorization": f"Bearer {TOKEN}"}
@@ -93,8 +106,10 @@ def reset_database() -> str:
 
 
 @app.get("/")
-async def root() -> str:
-    return "Hello, World!"
+async def root() -> list[str] | None:
+    client = InfluxDBClient3(token=TOKEN, host=HOST, database=DATABASE)
+    with client:
+        return get_measurements(client)
 
 
 @app.get("/{measurement}")
