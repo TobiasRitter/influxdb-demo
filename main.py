@@ -47,10 +47,12 @@ def get_measurements(
 def get_signals(
     client: InfluxDBClient3.InfluxDBClient3, measurement: str
 ) -> list[str] | None:
-    sql = f"SHOW TAG VALUES FROM {measurement} WITH KEY = signal_id"
+    quoted_measurement = measurement.replace('"', '""')
+    sql = f'SELECT DISTINCT signal_id FROM "{quoted_measurement}"'
 
     try:
         df = client.query_dataframe(sql)
+        print(f"Signals found for measurement {measurement}: {df.head()}")
         return df["signal_id"].tolist()
     except Exception as exc:
         print(f"Error reading signals: {exc}")
@@ -62,9 +64,7 @@ def read_samples(
     measurement: str,
     signal_id: str,
 ) -> pd.DataFrame | None:
-    sql = f"SELECT * FROM {measurement} ORDER BY time DESC"
-    if signal_id is not None:
-        sql += f" WHERE signal_id = '{signal_id}'"
+    sql = f"SELECT * FROM {measurement} ORDER BY time DESC WHERE signal_id = '{signal_id}'"
 
     try:
         df = client.query_dataframe(sql)
