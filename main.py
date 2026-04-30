@@ -87,7 +87,8 @@ def write_samples(
         )
         for sample in samples
     ]
-    client.write_points(points)
+    for point in points:
+        client.write(point)
     return points
 
 
@@ -116,7 +117,7 @@ async def root() -> list[str] | None:
 
 
 @app.get("/{measurement}")
-async def get_signals(measurement: str) -> list[str]:
+async def get_measurement_signals(measurement: str) -> list[str]:
     client = InfluxDBClient3(token=TOKEN, host=HOST, database=DATABASE)
     with client:
         signals = get_signals(client, measurement)
