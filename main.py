@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import os
-import requests
 
 from influxdb_client_3 import InfluxDBClient3, Point
 from fastapi import FastAPI
@@ -44,14 +43,14 @@ def get_measurements(
 
 
 def get_signals(
-    client: InfluxDBClient3.InfluxDBClient3, measurement: str
+    client: InfluxDBClient3.InfluxDBClient3, measurement_id: str
 ) -> list[str] | None:
-    quoted_measurement = measurement.replace('"', '""')
+    quoted_measurement = measurement_id.replace('"', '""')
     sql = f'SELECT DISTINCT signal_id FROM "{quoted_measurement}"'
 
     try:
         df = client.query_dataframe(sql)
-        print(f"Signals found for measurement {measurement}: {df.head()}")
+        print(f"Signals found for measurement {measurement_id}: {df.head()}")
         return df["signal_id"].tolist()
     except Exception as exc:
         print(f"Error reading signals: {exc}")
@@ -60,10 +59,10 @@ def get_signals(
 
 def read_samples(
     client: InfluxDBClient3.InfluxDBClient3,
-    measurement: str,
+    measurement_id: str,
     signal_id: str,
 ) -> pd.DataFrame | None:
-    quoted_measurement = measurement.replace('"', '""')
+    quoted_measurement = measurement_id.replace('"', '""')
     sql = (
         f'SELECT * FROM "{quoted_measurement}" '
         f"WHERE signal_id = '{signal_id}' "
@@ -80,13 +79,13 @@ def read_samples(
 
 def write_samples(
     client: InfluxDBClient3.InfluxDBClient3,
-    measurement: str,
+    measurement_id: str,
     signal_id: str,
     samples: list[Sample],
 ) -> list[Point]:
     points = [
         (
-            Point(measurement)
+            Point(measurement_id)
             .field("value", sample.value)
             .time(sample.timestamp)
             .tag("signal_id", signal_id)
@@ -99,13 +98,13 @@ def write_samples(
 
 def drop_measurement(
     client: InfluxDBClient3.InfluxDBClient3,
-    measurement: str,
+    measurement_id: str,
 ) -> str | None:
-    quoted_measurement = measurement.replace('"', '""')
+    quoted_measurement = measurement_id.replace('"', '""')
     sql = f'DROP TABLE "{quoted_measurement}"'
     try:
         client.query(sql)
-        return measurement
+        return measurement_id
     except Exception as exc:
         print(f"Error deleting measurement: {exc}")
         return None
@@ -118,22 +117,22 @@ async def root() -> list[str] | None:
         return get_measurements(client)
 
 
-@app.get("/{measurement}")
-async def get_measurement_signals(measurement: str) -> list[str]:
+@app.get("/{measurement_id}")
+async def get_measurement_signals(measurement_id: str) -> list[str]:
     client = InfluxDBClient3(token=TOKEN, host=HOST, database=DATABASE)
     with client:
-        signals = get_signals(client, measurement)
+        signals = get_signals(client, measurement_id)
         if signals is not None:
             return signals
         else:
             return []
 
 
-@app.get("/{measurement}/{signal_id}")
-async def get_samples(measurement: str, signal_id: str) -> str:
+@app.get("/{measurement_id}/{signal_id}")
+async def get_samples(measurement_id: str, signal_id: str) -> str:
     client = InfluxDBClient3(token=TOKEN, host=HOST, database=DATABASE)
     with client:
-        df = read_samples(client, measurement, signal_id)
+        df = read_samples(client, measurement_id, signal_id)
         if df is not None:
             return df.to_json(orient="records")
         else:
@@ -142,18 +141,18 @@ async def get_samples(measurement: str, signal_id: str) -> str:
 
 @app.post("/samples")
 async def add_samples(
-    measurement: str,
+    measurement_id: str,
     signal_id: str,
     samples: list[Sample],
 ) -> list[str]:
     client = InfluxDBClient3(token=TOKEN, host=HOST, database=DATABASE)
     with client:
-        inserted = write_samples(client, measurement, signal_id, samples)
+        inserted = write_samples(client, measurement_id, signal_id, samples)
         return [str(point) for point in inserted]
 
 
-@app.delete("/{measurement}")
-async def delete_measurement(measurement: str) -> str | None:
+@app.delete("/{measurement_id}")
+async def delete_measurement(measurement_id: str) -> str | None:
     client = InfluxDBClient3(token=TOKEN, host=HOST, database=DATABASE)
     with client:
-        return drop_measurement(client, measurement)
+        return drop_measurement(client, measurement_id)
