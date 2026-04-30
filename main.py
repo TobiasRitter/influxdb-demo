@@ -33,11 +33,12 @@ class Sample:
 def get_measurements(
     client: InfluxDBClient3.InfluxDBClient3,
 ) -> list[str] | None:
-    sql = "SHOW MEASUREMENTS"
+    sql = "SHOW TABLES"
 
     try:
         df = client.query_dataframe(sql)
-        return df["name"].tolist()
+        print(f"Measurements found: {df.head()}")
+        return df["table_name"].tolist()
     except Exception as exc:
         print(f"Error reading measurements: {exc}")
         return None
