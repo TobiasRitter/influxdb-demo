@@ -97,7 +97,7 @@ async def root() -> str:
     return "Hello, World!"
 
 
-@app.get("/samples/{measurement}")
+@app.get("/{measurement}")
 async def get_signals(measurement: str) -> list[str]:
     client = InfluxDBClient3(token=TOKEN, host=HOST, database=DATABASE)
     with client:
@@ -108,7 +108,7 @@ async def get_signals(measurement: str) -> list[str]:
             return []
 
 
-@app.get("/samples/{measurement}/{signal_id}")
+@app.get("/{measurement}/{signal_id}")
 async def get_samples(measurement: str, signal_id: str) -> str:
     client = InfluxDBClient3(token=TOKEN, host=HOST, database=DATABASE)
     with client:
