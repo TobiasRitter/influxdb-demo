@@ -97,21 +97,18 @@ def write_samples(
     return points
 
 
-def reset_database() -> str:
-    base = HOST.rstrip("/")
-    headers = {"Authorization": f"Bearer {TOKEN}"}
-
-    url = f"{base}/api/v3/configure/table"
-    params = {"db": DATABASE, "table": "demo_measurement"}
-    resp = requests.delete(url, headers=headers, params=params, timeout=10)
-
-    if resp.status_code in (200, 204):
-        return f"table demo_measurement deleted (status {resp.status_code})"
-
-    if resp.status_code == 404:
-        return f"table demo_measurement not found (status 404)"
-
-    raise RuntimeError(f"failed to delete table: {resp.status_code} {resp.text}")
+def drop_measurement(
+    client: InfluxDBClient3.InfluxDBClient3,
+    measurement: str,
+) -> str | None:
+    quoted_measurement = measurement.replace('"', '""')
+    sql = f'DROP TABLE "{quoted_measurement}"'
+    try:
+        client.query(sql)
+        return measurement
+    except Exception as exc:
+        print(f"Error deleting measurement: {exc}")
+        return None
 
 
 @app.get("/")
@@ -154,7 +151,8 @@ async def add_samples(
         return [str(point) for point in inserted]
 
 
-@app.delete("/reset")
-async def reset_endpoint() -> dict:
-    result = reset_database()
-    return {"status": "ok", "result": result}
+@app.delete("/{measurement}")
+async def delete_measurement(measurement: str) -> str | None:
+    client = InfluxDBClient3(token=TOKEN, host=HOST, database=DATABASE)
+    with client:
+        return drop_measurement(client, measurement)
