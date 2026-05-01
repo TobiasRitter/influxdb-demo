@@ -96,20 +96,6 @@ def write_samples(
     return points
 
 
-def drop_measurement(
-    client: InfluxDBClient3.InfluxDBClient3,
-    measurement_id: str,
-) -> str | None:
-    quoted_measurement = measurement_id.replace('"', '""')
-    sql = f'DROP TABLE "{quoted_measurement}"'
-    try:
-        client.query(sql)
-        return measurement_id
-    except Exception as exc:
-        print(f"Error deleting measurement: {exc}")
-        return None
-
-
 @app.get("/")
 async def root() -> list[str] | None:
     client = InfluxDBClient3(token=TOKEN, host=HOST, database=DATABASE)
@@ -149,10 +135,3 @@ async def add_samples(
     with client:
         inserted = write_samples(client, measurement_id, signal_id, samples)
         return [str(point) for point in inserted]
-
-
-@app.delete("/{measurement_id}")
-async def delete_measurement(measurement_id: str) -> str | None:
-    client = InfluxDBClient3(token=TOKEN, host=HOST, database=DATABASE)
-    with client:
-        return drop_measurement(client, measurement_id)
