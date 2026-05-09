@@ -5,6 +5,5 @@ __pycache__/
 venv/
 .env
 .env.*
-admin_token.json
 data/
 backup/
