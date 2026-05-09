@@ -7,13 +7,6 @@ services:
       dockerfile: influx.Dockerfile
     ports:
       - 8181:8181
-    environment:
-      - INFLUXDB3_ADMIN_TOKEN_FILE=/var/lib/influxdb3/admin_token.json
-    command:
-      - influxdb3
-      - serve
-      - --node-id=node0
-      - --object-store=file
     volumes:
       - ./data:/home/influxdb3/.influxdb
 
