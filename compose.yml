@@ -2,7 +2,9 @@ name: influxdb3
 services:
   influxdb3-core:
     container_name: influxdb3-core
-    image: influxdb:3-core
+    build:
+      context: .
+      dockerfile: influx.Dockerfile
     ports:
       - 8181:8181
     environment:
@@ -14,13 +16,12 @@ services:
       - --object-store=file
     volumes:
       - ./data:/home/influxdb3/.influxdb
-      - ./admin_token.json:/var/lib/influxdb3/admin_token.json:ro
 
   python-backend:
     container_name: influxdb3-python-backend
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: backend.Dockerfile
     env_file:
       - .env
     depends_on:
