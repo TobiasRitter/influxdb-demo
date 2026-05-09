@@ -8,8 +8,8 @@ services:
     ports:
       - 8181:8181
     volumes:
-      - ./data:/home/influxdb3/.influxdb
-
+      - ./data:/var/lib/influxdb3
+    user: "${UID}:${GID}" # Forces Docker to use your host user's ID
   python-backend:
     container_name: influxdb3-python-backend
     build:
