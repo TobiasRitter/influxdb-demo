@@ -3,8 +3,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 import os
 
+import httpx
 from influxdb_client_3 import InfluxDBClient3, Point
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import pandas as pd
 
@@ -135,3 +136,27 @@ async def add_samples(
     with client:
         inserted = write_samples(client, measurement_id, signal_id, samples)
         return [str(point) for point in inserted]
+
+
+@app.delete("/{measurement_id}")
+async def delete_measurement(measurement_id: str):
+    url = f"{HOST}/api/v3/configure/table"
+    params = {"db": DATABASE, "table": measurement_id}
+    headers = {"Authorization": f"Bearer {TOKEN}", "Content-Type": "application/json"}
+
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.delete(url, params=params, headers=headers)
+
+            if response.status_code == 200:
+                return {
+                    "message": f"Measurement '{measurement_id}' deleted successfully."
+                }
+            else:
+                raise HTTPException(
+                    status_code=response.status_code,
+                    detail=f"InfluxDB error: {response.text}",
+                )
+
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Request failed: {str(exc)}")
