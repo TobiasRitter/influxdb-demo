@@ -26,7 +26,7 @@ app.add_middleware(
 @dataclass
 class Sample:
     value: float
-    timestamp: int
+    time: int
 
 
 def get_measurements(
@@ -88,7 +88,7 @@ def write_samples(
         (
             Point(measurement_id)
             .field("value", sample.value)
-            .time(sample.timestamp)
+            .time(sample.time)
             .tag("signal_id", signal_id)
         )
         for sample in samples
