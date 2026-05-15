@@ -28,10 +28,6 @@ if [[ $confirm != [yY] ]]; then
     exit 1
 fi
 
-# 1. Stop the InfluxDB container
-echo "Stopping InfluxDB services..."
-docker compose stop influxdb3-core
-
 # 2. Clear current data
 # We delete the node directory to ensure a completely clean state
 echo "Clearing existing data..."
@@ -55,10 +51,6 @@ cp -r "$TEMP_EXTRACT/$INNER_FOLDER/$NODE_ID" "$HOST_DATA_ROOT/"
 
 # 6. Cleanup
 rm -rf "$TEMP_EXTRACT"
-
-# 7. Restart the services
-echo "Starting InfluxDB services..."
-docker compose start influxdb3-core
 
 echo "------------------------------------------"
 echo "Restore Completed Successfully!"
