@@ -121,7 +121,7 @@ async def get_samples(measurement_id: str, signal_id: str) -> str:
     with client:
         df = read_samples(client, measurement_id, signal_id)
         if df is not None:
-            return df.to_json(orient="records")
+            return df.to_json(orient="records", date_format="iso")
         else:
             return "No samples available"
 
