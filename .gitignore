@@ -12,3 +12,4 @@ admin_token.json
 *.parquet
 *.csv
 backup/
+backups/
