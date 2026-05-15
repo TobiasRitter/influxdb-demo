@@ -2,7 +2,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import os
+from typing import Generator
 
+from fastapi.params import Depends
 import httpx
 from influxdb_client_3 import InfluxDBClient3, Point
 from fastapi import FastAPI, HTTPException
@@ -21,6 +23,14 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+def get_influx_client() -> Generator[InfluxDBClient3, None, None]:
+    client = InfluxDBClient3(token=TOKEN, host=HOST, database=DATABASE)
+    try:
+        yield client
+    finally:
+        client.close()
 
 
 @dataclass
@@ -98,32 +108,32 @@ def write_samples(
 
 
 @app.get("/")
-async def root() -> list[str] | None:
-    client = InfluxDBClient3(token=TOKEN, host=HOST, database=DATABASE)
-    with client:
-        return get_measurements(client)
+async def root(
+    client: InfluxDBClient3 = Depends(get_influx_client),
+) -> list[str] | None:
+    return get_measurements(client)
 
 
 @app.get("/{measurement_id}")
-async def get_measurement_signals(measurement_id: str) -> list[str]:
-    client = InfluxDBClient3(token=TOKEN, host=HOST, database=DATABASE)
-    with client:
-        signals = get_signals(client, measurement_id)
-        if signals is not None:
-            return signals
-        else:
-            return []
+async def get_measurement_signals(
+    measurement_id: str,
+    client: InfluxDBClient3 = Depends(get_influx_client),
+) -> list[str]:
+    signals = get_signals(client, measurement_id)
+    return signals if signals is not None else []
 
 
 @app.get("/{measurement_id}/{signal_id}")
-async def get_samples(measurement_id: str, signal_id: str) -> str:
-    client = InfluxDBClient3(token=TOKEN, host=HOST, database=DATABASE)
-    with client:
-        df = read_samples(client, measurement_id, signal_id)
-        if df is not None:
-            return df.to_json(orient="records", date_format="iso")
-        else:
-            return "No samples available"
+async def get_samples(
+    measurement_id: str,
+    signal_id: str,
+    client: InfluxDBClient3 = Depends(get_influx_client),
+) -> str:
+    df = read_samples(client, measurement_id, signal_id)
+    if df is not None:
+        return df.to_json(orient="records", date_format="iso")
+    else:
+        return "No samples available"
 
 
 @app.post("/samples")
@@ -131,11 +141,10 @@ async def add_samples(
     measurement_id: str,
     signal_id: str,
     samples: list[Sample],
+    client: InfluxDBClient3 = Depends(get_influx_client),
 ) -> list[str]:
-    client = InfluxDBClient3(token=TOKEN, host=HOST, database=DATABASE)
-    with client:
-        inserted = write_samples(client, measurement_id, signal_id, samples)
-        return [str(point) for point in inserted]
+    inserted = write_samples(client, measurement_id, signal_id, samples)
+    return [str(point) for point in inserted]
 
 
 @app.delete("/{measurement_id}")
